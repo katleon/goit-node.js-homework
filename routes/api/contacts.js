@@ -5,7 +5,7 @@ const {
   removeContact,
   addContact,
   updateContact,
-} = require("../../controller/contacts");
+} = require("../../controller/contacts.js");
 
 const { addValidate, putValidate } = require("../../helpers/validation");
 
@@ -46,7 +46,7 @@ router.delete("/:contactId", async (req, res, next) => {
   }
 });
 
-router.put("/contactId", async (req, res, next) => {
+router.put("/:contactId", async (req, res, next) => {
   const foundContact = await getContactById(req.params.contactId);
   const error = putValidate.validate(req.body).error;
   if (!error) {
