@@ -1,19 +1,28 @@
 const express = require("express");
+
 const {
   listContacts,
   getContactById,
   removeContact,
   addContact,
   updateContact,
-} = require("../../controller/contacts.js");
+} = require("../../controller/contacts");
 
-const { addValidate, putValidate } = require("../../helpers/validation");
+const {
+  postValidate,
+  putValidate,
+  patchValidate,
+} = require("../../helpers/validation");
 
 const router = express.Router();
 
 router.get("/", async (req, res, next) => {
-  const contactsList = await listContacts();
-  res.json(contactsList);
+  try {
+    const contactsList = await listContacts();
+    res.json(contactsList);
+  } catch (error) {
+    return res.status(500).json({ error });
+  }
 });
 
 router.get("/:contactId", async (req, res, next) => {
@@ -25,10 +34,29 @@ router.get("/:contactId", async (req, res, next) => {
   }
 });
 
+router.patch("/:id/favorite", async (req, res, next) => {
+  if (!req.params.id) {
+    return res.status(404).json({ message: "Not found!" });
+  }
+  if (patchValidate.validate(req.body).error) {
+    console.log(patchValidate.validate(req.body).error.details[0].message);
+    return res.status(400).send({
+      message: patchValidate.validate(req.body).error.details[0].message,
+    });
+  }
+  try {
+    const favouriteUpdate = await updateContact(req.params.id, req.body);
+    return res.status(200).json(favouriteUpdate);
+  } catch (error) {
+    next(error);
+    return res.status(500).json({ message: "Something went wrong :<" });
+  }
+});
+
 router.post("/", async (req, res, next) => {
-  if (addValidate.validate(req.body).error) {
+  if (postValidate.validate(req.body).error) {
     res.status(400).json({
-      message: addValidate.validate(req.body).error.details[0].message,
+      message: postValidate.validate(req.body).error.details[0].message,
     });
   } else {
     const message = await addContact(req.body);
@@ -37,11 +65,10 @@ router.post("/", async (req, res, next) => {
 });
 
 router.delete("/:contactId", async (req, res, next) => {
-  const foundContact = await getContactById(req.params.contactId);
+  const foundContact = await removeContact(req.params.contactId);
   if (!foundContact) {
     res.status(404).json({ message: "Not found!" });
   } else {
-    await removeContact(req.params.contactId);
     res.json({ message: "Contact deleted" });
   }
 });
@@ -49,13 +76,17 @@ router.delete("/:contactId", async (req, res, next) => {
 router.put("/:contactId", async (req, res, next) => {
   const foundContact = await getContactById(req.params.contactId);
   const error = putValidate.validate(req.body).error;
-  if (!error) {
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+  if (!foundContact) {
+    res.status(404).json({ message: "Not found!" });
+  }
+  try {
     const editedContact = await updateContact(req.params.contactId, req.body);
     res.json(editedContact);
-  } else if (!foundContact) {
-    res.status(404).json({ message: "Not found!" });
-  } else if (error) {
-    res.status(400).json({ message: error.message });
+  } catch (error) {
+    res.json(error);
   }
 });
 

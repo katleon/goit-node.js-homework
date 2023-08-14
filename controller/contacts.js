@@ -1,63 +1,36 @@
-const fs = require("fs/promises");
-const path = require("path");
-const { v4: uuidv4 } = require("uuid");
-
-const contactsPath = path.resolve("./models/contacts.json");
+const Contact = require("../models/contacts.js");
 
 async function listContacts() {
-  const contactsList = await fs.readFile(contactsPath);
-  return JSON.parse(contactsList);
+  const contacts = await Contact.find();
+  return contacts;
 }
 
 async function getContactById(contactId) {
-  const contactsList = await listContacts();
-  const foundContact = contactsList.find((contact) => contact.id === contactId);
+  const foundContact = await Contact.findById(contactId);
   return foundContact;
 }
 
 async function addContact(body) {
-  const contactsList = await listContacts();
   const { name, email, phone } = body;
-  const newContact = {
-    id: uuidv4(),
-    name,
-    email,
-    phone,
-  };
-  contactsList.push(newContact);
-
-  await fs.writeFile(contactsPath, JSON.stringify(contactsList));
-  return newContact;
+  const contact = new Contact({ name, email, phone });
+  await contact.save();
+  return contact;
 }
 
 async function removeContact(contactId) {
-  const contactsList = await listContacts();
-  const filteredContacts = JSON.stringify(
-    contactsList.filter((contact) => contact.id !== contactId)
-  );
-  await fs.writeFile(contactsPath, filteredContacts);
+  try {
+    return await Contact.findByIdAndDelete(contactId);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function updateContact(contactId, body) {
-  const contactsList = await listContacts();
-
-  const editedContactList = contactsList.map((contact) => {
-    if (contact.id === contactId) {
-      const editedContact = {
-        id: contact.id,
-        name: body.name ? body.name : contact.name,
-        email: body.email ? body.email : contact.email,
-        phone: body.phone ? body.phone : contact.phone,
-      };
-
-      return editedContact;
-    } else {
-      return contact;
-    }
-  });
-  await fs.writeFile(contactsPath, JSON.stringify(editedContactList));
-
-  return editedContactList.find((contact) => contact.id === contactId);
+  try {
+    return await Contact.findByIdAndUpdate(contactId, body);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 module.exports = {

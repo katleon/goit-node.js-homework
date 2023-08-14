@@ -12,7 +12,12 @@ const changeContactSchema = Joi.object({
   phone: Joi.string().min(6).max(22),
 }).or("name", "email", "phone");
 
+const pathContactSchema = Joi.object({
+  favorite: Joi.boolean().required(),
+});
+
 module.exports = {
-  addValidate: addContactSchema,
   putValidate: changeContactSchema,
+  postValidate: addContactSchema,
+  patchValidate: pathContactSchema,
 };
