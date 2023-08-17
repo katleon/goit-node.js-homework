@@ -1,29 +1,29 @@
-const jwt = require("jsonwebtoken");
-const { getUserById } = require("../controller/users");
+import jwt from "jsonwebtoken";
 
-require("dotenv").config();
+import HttpErrorCreator from "../helpers/HttpErrorCreator.js";
+import User from "../models/user.js";
+import controllerDecorator from "../helpers/controllerDecorator.js";
 
 const JWT_TOKEN = process.env.JWT_KEY;
 
-const auth = async (req, res, next) => {
-  const token = req.headers.authorization;
-  if (!token) {
-    return res.status(401).send("No token provided");
+async function autorizationUser(req, res, next) {
+  const { authorization = "" } = req.headers;
+  const [bearer, token] = authorization.split(" ");
+
+  if (bearer !== "Bearer") {
+    throw HttpErrorCreator(401);
   }
   try {
-    const decoded = jwt.verify(token, JWT_TOKEN);
-    const { id } = decoded;
-    const user = await getUserById(id);
-
-    if (user.token === token) {
-      req.body = user;
-      next();
-    } else {
-      return res.status(401).json({ message: "Not authorized" });
+    const { id } = jwt.verify(token, JWT_TOKEN);
+    const user = await User.findById(id);
+    if (!user || !user.token) {
+      throw HttpErrorCreator(401);
     }
-  } catch (error) {
-    return res.status(401).json({ message: "Not authorized", error });
+    req.user = user;
+    next();
+  } catch {
+    throw HttpErrorCreator(401);
   }
-};
+}
 
-module.exports = auth;
+export default controllerDecorator(autorizationUser);
