@@ -1,31 +1,37 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
+import { handleMongooseError, handleRunValidators } from "./hooks.js";
 
-const Schema = mongoose.Schema;
-
-const contacts = new Schema(
-  {
-    name: {
-      type: String,
-      minlength: 2,
-      maxlength: 30,
-      required: [true, "Set name for contact"],
-    },
-    email: {
-      type: String,
-      required: [true, "Contact email is required"],
-    },
-    phone: {
-      type: String,
-      required: [true, "Contact phone is required"],
-    },
-    favorite: {
-      type: Boolean,
-      default: false,
-    },
+const contact = new Schema({
+  name: {
+    type: String,
+    minlength: 2,
+    maxlength: 30,
+    required: [true, "Set name for contact"],
   },
-  { versionKey: false, timestamps: true }
-);
+  email: {
+    type: String,
+    required: [true, "Contact email is required"],
+  },
+  phone: {
+    type: String,
+    required: [true, "Contact phone is required"],
+  },
+  favorite: {
+    type: Boolean,
+    default: false,
+  },
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "user",
+  },
+});
 
-const Contact = mongoose.model("contact", contacts);
+contact.pre("findOneAndUpdate", handleRunValidators);
 
-module.exports = Contact;
+contact.post("save", handleMongooseError);
+
+contact.post("findOneAndUpdate", handleMongooseError);
+
+const Contact = model("contact", contact);
+
+export default Contact;
