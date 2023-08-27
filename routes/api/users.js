@@ -7,6 +7,7 @@ import {
   userUpdateSubscription,
 } from "../../helpers/schema.js";
 import autorizationUser from "../../auth/auth.js";
+import upload from "../../helpers/upload.js";
 
 const router = express.Router();
 
@@ -31,6 +32,13 @@ router.patch(
   autorizationUser,
   validateRequestBody(userUpdateSubscription),
   usersControllers.updateUserSubscription
+);
+
+router.patch(
+  "/avatars",
+  autorizationUser,
+  upload.single("avatar"),
+  usersControllers.updateAvatars
 );
 
 export default router;
