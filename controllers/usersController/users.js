@@ -1,5 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
+import gravatar from "gravatar";
+import path from "path";
+import fs from "fs/promises";
+import Jimp from "jimp";
 
 import User from "../../models/user.js";
 import HttpErrorCreator from "../../helpers/HttpErrorCreator.js";
@@ -13,12 +17,18 @@ export async function createNewUser(req, res) {
     throw HttpErrorCreator(409, "Email in use");
   }
   const hashedPassword = await bcryptjs.hash(password, 10);
-  const newUser = await User.create({ ...req.body, password: hashedPassword });
+  const avatarURL = gravatar.url(email);
+  const newUser = await User.create({
+    ...req.body,
+    password: hashedPassword,
+    avatarURL,
+  });
 
   res.status(201).json({
     user: {
       email: newUser.email,
       subscription: newUser.subscription,
+      avatarURL,
     },
   });
 }
@@ -37,7 +47,7 @@ export async function logIn(req, res) {
   const payload = {
     id: user._id,
   };
-  const token = jwt.sign(payload, JWT_TOKEN);
+  const token = jwt.sign(payload, JWT_TOKEN, { expiresIn: "24h" });
   await User.findByIdAndUpdate(user._id, { token });
 
   res.json({
@@ -86,10 +96,35 @@ export async function logOut(req, res) {
   res.status(204).json();
 }
 
+export async function updateAvatars(req, res, next) {
+  const { _id } = req.user;
+  const { path: tmpPath, originalname } = req.file;
+  const fileName = `${_id}_${originalname}`;
+  const avatarsPath = path.resolve("public", "avatars", fileName);
+  const avatarURL = path.join("avatars", fileName);
+  try {
+    const image = await Jimp.read(tmpPath);
+    await image.resize(250, 250);
+    await image.writeAsync(tmpPath);
+
+    await fs.rename(tmpPath, avatarsPath);
+  } catch (error) {
+    await fs.unlink(tmpPath);
+    return next(error);
+  }
+
+  await User.findByIdAndUpdate(_id, { avatarURL });
+
+  res.json({
+    avatarURL,
+  });
+}
+
 export default {
   createNewUser,
   logIn,
   getCurrentUser,
   updateUserSubscription,
   logOut,
+  updateAvatars,
 };

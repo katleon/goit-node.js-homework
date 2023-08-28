@@ -6,6 +6,7 @@ import {
   getCurrentUser,
   updateUserSubscription,
   logOut,
+  updateAvatars,
 } from "./users.js";
 
 export default {
@@ -14,4 +15,5 @@ export default {
   getCurrentUser: controllerDecorator(getCurrentUser),
   logOut: controllerDecorator(logOut),
   updateUserSubscription: controllerDecorator(updateUserSubscription),
+  updateAvatars: controllerDecorator(updateAvatars),
 };
