@@ -5,6 +5,7 @@ import {
   userSignupSchema,
   userLogInSchema,
   userUpdateSubscription,
+  userEmailSchema,
 } from "../../helpers/schema.js";
 import autorizationUser from "../../auth/auth.js";
 import upload from "../../helpers/upload.js";
@@ -15,6 +16,14 @@ router.post(
   "/signup",
   validateRequestBody(userSignupSchema),
   usersControllers.createNewUser
+);
+
+router.get("/verify/:verificationToken", usersControllers.verifyEmail);
+
+router.post(
+  "/verify",
+  validateRequestBody(userEmailSchema),
+  usersControllers.resendVerificationEmail
 );
 
 router.post(

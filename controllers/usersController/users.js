@@ -4,9 +4,11 @@ import gravatar from "gravatar";
 import path from "path";
 import fs from "fs/promises";
 import Jimp from "jimp";
+const { v4: uuidv4 } = require("uuid");
 
 import User from "../../models/user.js";
 import HttpErrorCreator from "../../helpers/HttpErrorCreator.js";
+import sendEmail from "../../helpers/sendEmail.js";
 
 const JWT_TOKEN = process.env.JWT_KEY;
 
@@ -18,11 +20,21 @@ export async function createNewUser(req, res) {
   }
   const hashedPassword = await bcryptjs.hash(password, 10);
   const avatarURL = gravatar.url(email);
+  const verificationToken = uuidv4();
   const newUser = await User.create({
     ...req.body,
     password: hashedPassword,
     avatarURL,
+    verificationToken,
   });
+
+  const verifyEmailMessage = {
+    to: email,
+    subject: "Please, verify your email",
+    html: `<a target='_blank' href='http://localhost:3000/api/users/verify/${verificationToken}'>Click here to verify your email</a>`,
+  };
+
+  await sendEmail(verifyEmailMessage);
 
   res.status(201).json({
     user: {
@@ -37,6 +49,10 @@ export async function logIn(req, res) {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (!user) {
+    throw HttpErrorCreator(401, "Email or password is wrong");
+  }
+
+  if (!user.verify) {
     throw HttpErrorCreator(401, "Email or password is wrong");
   }
   const userPassword = await bcryptjs.compare(password, user.password);

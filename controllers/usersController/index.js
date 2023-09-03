@@ -9,6 +9,8 @@ import {
   updateAvatars,
 } from "./users.js";
 
+import { verifyEmail, resendVerificationEmail } from "./verifyEmails.js";
+
 export default {
   createNewUser: controllerDecorator(createNewUser),
   logIn: controllerDecorator(logIn),
