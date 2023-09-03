@@ -18,4 +18,6 @@ export default {
   logOut: controllerDecorator(logOut),
   updateUserSubscription: controllerDecorator(updateUserSubscription),
   updateAvatars: controllerDecorator(updateAvatars),
+  verifyEmail: controllerDecorator(verifyEmail),
+  resendEmail: controllerDecorator(resendVerificationEmail),
 };
