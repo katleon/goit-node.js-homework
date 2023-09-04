@@ -4,7 +4,7 @@ import gravatar from "gravatar";
 import path from "path";
 import fs from "fs/promises";
 import Jimp from "jimp";
-const { v4: uuidv4 } = require("uuid");
+import { v4 as uuidv4 } from "uuid";
 
 import User from "../../models/user.js";
 import HttpErrorCreator from "../../helpers/HttpErrorCreator.js";

@@ -23,7 +23,7 @@ router.get("/verify/:verificationToken", usersControllers.verifyEmail);
 router.post(
   "/verify",
   validateRequestBody(userEmailSchema),
-  usersControllers.resendVerificationEmail
+  usersControllers.resendEmail
 );
 
 router.post(
