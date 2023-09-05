@@ -53,7 +53,7 @@ export async function logIn(req, res) {
   }
 
   if (!user.verify) {
-    throw HttpErrorCreator(401, "Email or password is wrong");
+    throw HttpErrorCreator(401, "Please verify your email before logging in.");
   }
   const userPassword = await bcryptjs.compare(password, user.password);
   if (!userPassword) {
